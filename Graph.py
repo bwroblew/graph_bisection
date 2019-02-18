@@ -61,4 +61,5 @@ class Graph(object):
                           if self.__matrix[index][self.__vertices.index(vertex)] == NOT_CONNECTED]
         return not_neighbours
 
-
+    def get_n(self):
+        return self.__n
