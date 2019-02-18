@@ -10,6 +10,7 @@ class GraphGenerator(object):
         http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.47.8598&rep=rep1&type=pdf
         :return:
         """
+        edges_before = graph.get_m()
         vertices = graph.get_vertices()
         to_discover, discovered = set(vertices), set()
         current_vertex = random.sample(to_discover, 1).pop()
@@ -22,17 +23,20 @@ class GraphGenerator(object):
                 to_discover.remove(neighbour_vertex)
                 discovered.add(neighbour_vertex)
             current_vertex = neighbour_vertex
+        assert graph.get_m() - edges_before == len(vertices) - 1, "Method didn't add proper number of edges!"
 
     @classmethod
-    def __generate_edges(cls, graph, n):
+    def __generate_edges(cls, graph, m):
+        edges_before = graph.get_m()
         vertices = graph.get_vertices()
-        for _ in range(n):
+        for _ in range(m):
             v1 = random.choice(vertices)
             v2 = random.choice(graph.get_not_neighbours(v1))
             while v2 is v1:
                 v1 = random.choice(vertices)
                 v2 = random.choice(graph.get_not_neighbours(v1))
             graph.add_edge(v1, v2)
+        assert graph.get_m() - edges_before == m, "Method didn't add proper number of edges!"
 
     @classmethod
     def generate(cls, n, m=None, connected=True):

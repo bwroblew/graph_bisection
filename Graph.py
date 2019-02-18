@@ -11,11 +11,12 @@ class Graph(object):
 
     def __init__(self, n):
         self.__n = n
+        self.__m = 0
         self.__matrix = [[NOT_CONNECTED for _ in range(n)] for _ in range(n)]
         self.__vertices = [Vertex(-1) for _ in range(n)]
 
     def __str__(self):
-        txt = "Graph with {} vertices\n".format(self.__n)
+        txt = "Graph with {} vertices\nAnd {} edges\n".format(self.__n, self.__m)
         for row in self.__matrix:
             for cell in row:
                 txt += str(cell)
@@ -33,13 +34,22 @@ class Graph(object):
     def add_edge(self, v1, v2):
         index_v1 = self.__vertices.index(v1)
         index_v2 = self.__vertices.index(v2)
+        assert self.__matrix[index_v1][index_v2] == NOT_CONNECTED, "Edge exists!"
+        self.__m += 1
         self.__matrix[index_v1][index_v2] = CONNECTED
         self.__matrix[index_v2][index_v1] = CONNECTED
 
     def get_vertices(self):
         return self.__vertices
 
-    def connected(self, v1, v2):
+    def is_connected(self, v1, v2):
+        """
+        Method checks if there is an edge connecting v1 and v2.
+        Returns false if v1 and v2 are the same vertex.
+        :param v1:
+        :param v2:
+        :return:
+        """
         index_v1 = self.__vertices.index(v1)
         index_v2 = self.__vertices.index(v2)
         return True if self.__matrix[index_v1][index_v2] == 1 else False
@@ -63,3 +73,11 @@ class Graph(object):
 
     def get_n(self):
         return self.__n
+
+    def get_m(self):
+        return self.__m
+
+    def get_vertex_index(self, v):
+        return self.__vertices.index(v)
+
+
