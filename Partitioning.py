@@ -141,6 +141,73 @@ class Partitioning(object):
                     continue
                 break
 
+    def kla(self):
+        """
+        Kernighan-Lin Algorithm described in paper.
+        Bisection only
+        """
+        assert self.__n == 2, "This algorithm is implemented only for bisection"
+        self.random_partitions()
+        best_x, best_y = set(self.__partitions[0]), set(self.__partitions[1])
+        best_cost = self.calc_cost()
+        improved = True
+        while improved:
+            improved = False
+            x_prim = set(self.__partitions[0])
+            y_prim = set(self.__partitions[1])
+            while x_prim and y_prim:
+                # get first items from x and from y
+                for x_elem in x_prim: break
+                for y_elem in y_prim: break
+                # calculate max sxy based on partitions, not x and y sets
+                max_value = self.__calculate_sxy(x_elem, y_elem, self.__partitions[0], self.__partitions[1])
+                for v1 in x_prim:
+                    for v2 in y_prim:
+                        val = self.__calculate_sxy(v1, v2, self.__partitions[0], self.__partitions[1])
+                        if val > max_value:
+                            max_value = val
+                            x_elem = v1
+                            y_elem = v2
+                self.__swap_vertices(x_elem, y_elem, self.__partitions[0], self.__partitions[1])
+                new_cost = self.calc_cost()
+                if new_cost < best_cost:
+                    best_x, best_y = set(self.__partitions[0]), set(self.__partitions[1])
+                    best_cost = new_cost
+                    improved = True
+                x_prim.remove(x_elem)
+                y_prim.remove(y_elem)
+            self.__partitions[0], self.__partitions[1] = set(best_x), set(best_y)
 
+    def rbha(self):
+        """
+        Randomized-Black-Holes Algorithm
+        """
+        x_set, y_set = set(), set()
+        sets = [x_set, y_set]
+        v_sizes = self.__get_vertices_numbers()
+        while len(x_set) < v_sizes[0] or len(y_set) < v_sizes[1]:
+            # set X
+            for current_set in sets:
+                # in case of non-equal partition sizes
+                if len(current_set) == v_sizes[sets.index(current_set)]:
+                    continue
+                edges = []
+                vertex = None
+                for x in current_set:
+                    nbs = self.__graph.get_neighbours(x)
+                    for nb in nbs:
+                        if nb not in x_set and nb not in y_set:
+                            edges.append((x, nb))
+                if len(edges) > 0:
+                    vertex = random.choice(edges)[1]
+                else:
+                    vertices = [v for v in self.__graph.get_vertices() if v not in x_set and v not in y_set]
+                    if len(vertices) == 0:
+                        # this partition is full
+                        break
+                    vertex = random.choice(vertices)
+                current_set.add(vertex)
+        self.__partitions[0] = set(x_set)
+        self.__partitions[1] = set(y_set)
 
 

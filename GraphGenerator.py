@@ -51,4 +51,20 @@ class GraphGenerator(object):
         cls.__generate_edges(graph, edges_remaining)
         return graph
 
+    @classmethod
+    def generate_triangularization(cls, size):
+        n = size ** 2
+        graph = Graph(n)
+        vertices = graph.get_vertices()
+        for row in range(size):
+            for i in range(size):
+                if row != 0:
+                    graph.add_edge(vertices[row * size + i], vertices[row * size + i-size])
+                if i != size - 1:
+                    graph.add_edge(vertices[row * size + i], vertices[row * size + i+1])
+                if row != 0 and i != size - 1:
+                    graph.add_edge(vertices[row * size + i], vertices[row * size + i-size+1])
+        return graph
+
+
 
