@@ -93,8 +93,8 @@ class Partitioning(object):
         """
         assert len(partition) > 0, "Partition is empty"
         cost = 0
-        for vp in partition:
-            if self.__graph.is_connected(vertex, vp):
+        for nb in self.__graph.get_neighbours(vertex):
+            if nb in partition:
                 cost += 1
         return cost
 
@@ -188,11 +188,10 @@ class Partitioning(object):
         while len(x_set) < v_sizes[0] or len(y_set) < v_sizes[1]:
             # set X
             for current_set in sets:
-                # in case of non-equal partition sizes
+                # in case of not equal partition sizes
                 if len(current_set) == v_sizes[sets.index(current_set)]:
                     continue
                 edges = []
-                vertex = None
                 for x in current_set:
                     nbs = self.__graph.get_neighbours(x)
                     for nb in nbs:
@@ -202,12 +201,52 @@ class Partitioning(object):
                     vertex = random.choice(edges)[1]
                 else:
                     vertices = [v for v in self.__graph.get_vertices() if v not in x_set and v not in y_set]
+                    # this partition is full
                     if len(vertices) == 0:
-                        # this partition is full
                         break
                     vertex = random.choice(vertices)
                 current_set.add(vertex)
         self.__partitions[0] = set(x_set)
         self.__partitions[1] = set(y_set)
+
+    def bfs_partitions(self):
+        """
+        Assigning vertices to partitions based on BFS algorithm.
+        MAX BIS
+        :return:
+        """
+        self.__clear_partitions()
+        vertices = set(self.__graph.get_vertices())
+        root = random.sample(vertices, 1).pop()
+        print(self.__graph.get_vertices().index(root))
+        vertices.remove(root)
+        queue = [(root, 0)]
+        while queue:
+            (u, p) = queue.pop(0)
+            self.__partitions[p].add(u)
+            for nb in self.__graph.get_neighbours(u):
+                if nb in vertices:
+                    queue.append((nb, int(not p)))
+                    vertices.remove(nb)
+
+    """def kla2(self):
+        self.random_partitions()
+        vertices = self.__graph.get_vertices()
+        while True:
+            D = {}
+            for v in vertices:
+                for partition in self.__partitions:
+                    if v in partition:
+                        p_internal = partition
+                    else:
+                        p_external = partition
+                D[v] = self.__get_vertex_cost(v, p_external) - self.__get_vertex_cost(v, p_internal)
+            gv, av, bv = [], [], []
+            for i in range(int(len(vertices) / 2)):
+                max_ab = (self.__partitions[0][0], self.__partitions[1][0], )
+                for a in self.__partitions[0]:
+                    for b in self.__partitions[1]:
+"""
+
 
 
