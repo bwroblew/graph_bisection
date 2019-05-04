@@ -1,5 +1,5 @@
 import random
-from Graph import Graph
+from GraphLib.Graph import Graph
 
 
 class GraphGenerator(object):

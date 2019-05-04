@@ -229,24 +229,3 @@ class Partitioning(object):
                     queue.append((nb, int(not p)))
                     vertices.remove(nb)
 
-    """def kla2(self):
-        self.random_partitions()
-        vertices = self.__graph.get_vertices()
-        while True:
-            D = {}
-            for v in vertices:
-                for partition in self.__partitions:
-                    if v in partition:
-                        p_internal = partition
-                    else:
-                        p_external = partition
-                D[v] = self.__get_vertex_cost(v, p_external) - self.__get_vertex_cost(v, p_internal)
-            gv, av, bv = [], [], []
-            for i in range(int(len(vertices) / 2)):
-                max_ab = (self.__partitions[0][0], self.__partitions[1][0], )
-                for a in self.__partitions[0]:
-                    for b in self.__partitions[1]:
-"""
-
-
-
