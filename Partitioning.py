@@ -1,4 +1,5 @@
 import random
+import math
 
 
 class Partitioning(object):
@@ -47,6 +48,8 @@ class Partitioning(object):
         # cost is number of edges inside partitions
         cost = 0
         for partition in self.__partitions:
+            assert len(partition) >= self.__graph.get_n() / 2 - 1, "Partition too small"
+            assert self.__graph.get_n() / 2 + 1 >= len(partition), "Partition too big"
             for v1 in partition:
                 for v2 in partition:
                     if self.__graph.is_connected(v1, v2):
@@ -56,7 +59,6 @@ class Partitioning(object):
         cost /= 2
         # return number of edges between partitions
         return self.__graph.get_m() - cost
-
 
     def __swap_vertices(self, v1, v2, p1, p2):
         """
@@ -100,7 +102,7 @@ class Partitioning(object):
 
     def __calculate_sxy(self, v1, v2, p1, p2):
         """
-        Method calculates S(x, y) defined in https://www.informatik.uni-kiel.de/~gej/publ/bisection.pdf
+        Method calculates S(x, y) defined in http://snovit.math.umu.se/~gerold/publ/bisection.pdf
         :param v1:
         :param v2:
         :param p1:
@@ -121,7 +123,8 @@ class Partitioning(object):
 
     def sga(self):
         """
-        Simple greedy algorithm described in https://www.informatik.uni-kiel.de/~gej/publ/bisection.pdf
+        MIN-BISECTION
+        Simple greedy algorithm described in http://snovit.math.umu.se/~gerold/publ/bisection.pdf
         For now implemented for BISECTION only.
         """
         assert self.__n == 2, "This algorithm is implemented only for bisection"
@@ -141,13 +144,15 @@ class Partitioning(object):
                     continue
                 break
 
-    def kla(self):
+    def kla(self, random=True):
         """
+        MIN-BISECTION
         Kernighan-Lin Algorithm described in paper.
         Bisection only
         """
         assert self.__n == 2, "This algorithm is implemented only for bisection"
-        self.random_partitions()
+        if random:
+            self.random_partitions()
         best_x, best_y = set(self.__partitions[0]), set(self.__partitions[1])
         best_cost = self.calc_cost()
         improved = True
@@ -180,6 +185,7 @@ class Partitioning(object):
 
     def rbha(self):
         """
+        MIN-BISECTION
         Randomized-Black-Holes Algorithm
         """
         x_set, y_set = set(), set()
@@ -211,6 +217,7 @@ class Partitioning(object):
 
     def bfs_partitions(self):
         """
+        MAX-BISECTION
         Assigning vertices to partitions based on BFS algorithm.
         MAX BIS
         :return:
@@ -229,3 +236,102 @@ class Partitioning(object):
                     queue.append((nb, int(not p)))
                     vertices.remove(nb)
 
+    def lpa_vertex_cost(self, v1, v2, p0, p1, p2, p3):
+        ov2p1 = self.__get_vertex_cost(v2, p1)
+        ov1p0 = self.__get_vertex_cost(v1, p0)
+        iv2p3 = self.__get_vertex_cost(v2, p3)
+        iv1p2 = self.__get_vertex_cost(v1, p2)
+        omega = 1 if self.__graph.is_connected(v1, v2) else 0
+        sxy = ov2p1 + ov1p0 - iv2p3 - iv1p2 - omega
+        # maybe 2* omega
+        return sxy
+
+    def lpa_calc_cost(self, bis, supgraph):
+        cost = 0
+        partitions = [self.__partitions[0].union(bis.__partitions[1]), self.__partitions[1].union(bis.__partitions[0])]
+        for partition in partitions:
+            assert len(partition) > self.__n / 2 - 1, "Partition too small"
+            for v1 in partition:
+                for v2 in partition:
+                    if supgraph.is_connected(v1, v2):
+                        cost += 1
+        # dividing cost by 2 as we counted each edge twice
+        assert cost % 2 == 0, "Cost should be an even number!"
+        cost /= 2
+        # return number of edges between partitions
+        return supgraph.get_m() - cost
+
+    def find_best_lpa(self, bis, supgraph):
+        self.random_partitions()
+        best_x, best_y = set(self.__partitions[0]), set(self.__partitions[1])
+        best_cost = self.lpa_calc_cost(bis, supgraph)
+        improved = True
+        while improved:
+            improved = False
+            x_prim = set(self.__partitions[0])
+            y_prim = set(self.__partitions[1])
+            while x_prim and y_prim:
+                # get first items from x and from y
+                for x_elem in x_prim: break
+                for y_elem in y_prim: break
+                # calculate max sxy based on partitions, not x and y sets
+                max_value = self.lpa_vertex_cost(x_elem, y_elem, bis.__partitions[0], bis.__partitions[1], self.__partitions[0], self.__partitions[1])
+                for v1 in x_prim:
+                    for v2 in y_prim:
+                        val = self.lpa_vertex_cost(x_elem, y_elem, bis.__partitions[0], bis.__partitions[1], self.__partitions[0], self.__partitions[1])
+                        if val > max_value:
+                            max_value = val
+                            x_elem = v1
+                            y_elem = v2
+                self.__swap_vertices(x_elem, y_elem, self.__partitions[0], self.__partitions[1])
+                new_cost = self.lpa_calc_cost(bis, supgraph)
+                if new_cost < best_cost:
+                    best_x, best_y = set(self.__partitions[0]), set(self.__partitions[1])
+                    best_cost = new_cost
+                    improved = True
+                x_prim.remove(x_elem)
+                y_prim.remove(y_elem)
+            self.__partitions[0], self.__partitions[1] = set(best_x), set(best_y)
+
+    def lpa(self):
+        """
+        Logaritmical Partitioning Algorithm
+        :return:
+        """
+        assert self.__n == 2, "This algorithm is implemented only for bisection"
+        if self.__graph.get_n() == 2:
+            vertices = self.__graph.get_vertices()
+            self.__partitions[0] = set()
+            self.__partitions[0].add(vertices[0])
+            self.__partitions[1] = set()
+            self.__partitions[1].add(vertices[1])
+            return
+        self.kla()
+        s1 = self.__graph.get_subgraph(self.__partitions[0])
+        s2 = self.__graph.get_subgraph(self.__partitions[1])
+
+        bis1 = Partitioning(s1)
+        bis2 = Partitioning(s2)
+        bis1.lpa()
+        #bis1.kla()
+        bis2.find_best_lpa(bis1, self.__graph)
+
+        self.__partitions[0] = bis1.__partitions[0].union(bis2.__partitions[1])
+        self.__partitions[1] = bis1.__partitions[1].union(bis2.__partitions[0])
+        self.kla(False)
+
+    def ikla(self):
+        self.kla()
+        best0 = self.__partitions[0]
+        best1 = self.__partitions[1]
+        best_cost = self.calc_cost()
+        for _ in range(100):
+            self.__clear_partitions()
+            self.kla()
+            cost = self.calc_cost()
+            if cost < best_cost:
+                best_cost = cost
+                best0 = self.__partitions[0]
+                best1 = self.__partitions[1]
+        self.__partitions[0] = best0
+        self.__partitions[1] = best1

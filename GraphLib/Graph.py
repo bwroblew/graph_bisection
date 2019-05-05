@@ -23,6 +23,16 @@ class Graph(object):
             txt += "\n"
         return txt
 
+    def get_subgraph(self, vertex_set):
+        subgraph = Graph(0)
+        for vertex in vertex_set:
+            subgraph.add_vertex(vertex)
+        for vertex in vertex_set:
+            for neigh in self.get_neighbours(vertex):
+                if neigh in vertex_set and not subgraph.is_connected(vertex, neigh):
+                    subgraph.add_edge(vertex, neigh)
+        return subgraph
+
     def add_vertex(self, v):
         self.__n += 1
         self.__vertices.append(v)
@@ -80,4 +90,16 @@ class Graph(object):
     def get_vertex_index(self, v):
         return self.__vertices.index(v)
 
+    def get_complement(self):
+        rev = Graph(0)
+        for vertex in self.__vertices:
+            rev.add_vertex(vertex)
+        rev.__m = self.__n * (self.__n - 1) / 2 - self.__m
+        for i in range(len(self.__matrix)):
+            for j in range(len(self.__matrix[i])):
+                if self.__matrix[i][j] == NOT_CONNECTED:
+                    rev.__matrix[i][j] = CONNECTED
+                else:
+                    rev.__matrix[i][j] = NOT_CONNECTED
+        return rev
 
